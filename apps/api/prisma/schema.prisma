@@ -1,0 +1,100 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  PLAYER
+  ADMIN
+}
+
+enum GameStatus {
+  WAITING
+  ACTIVE
+  FINISHED
+  CANCELLED
+}
+
+enum GameResult {
+  WHITE_WIN
+  BLACK_WIN
+  DRAW
+}
+
+enum PieceColor {
+  WHITE
+  BLACK
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(PLAYER)
+  rating       Int      @default(1200)
+  createdAt    DateTime @default(now())
+
+  games         GamePlayer[]
+  ratingHistory RatingHistory[]
+}
+
+model Game {
+  id         String      @id @default(uuid())
+  status     GameStatus  @default(WAITING)
+  result     GameResult?
+  fen        String      @default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+  version    Int         @default(0)
+  createdAt  DateTime    @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  players GamePlayer[]
+  moves   Move[]
+}
+
+model GamePlayer {
+  id       String     @id @default(uuid())
+  userId   String
+  gameId   String
+  color    PieceColor
+
+  user User @relation(fields: [userId], references: [id])
+  game Game @relation(fields: [gameId], references: [id])
+
+  @@unique([gameId, userId])
+  @@unique([gameId, color])
+  @@index([userId])
+}
+
+model Move {
+  id         String   @id @default(uuid())
+  gameId     String
+  moveNumber Int
+  fromSquare String
+  toSquare   String
+  san        String
+  fenAfter   String
+  createdAt  DateTime @default(now())
+
+  game Game @relation(fields: [gameId], references: [id])
+
+  @@unique([gameId, moveNumber])
+}
+
+model RatingHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  gameId    String
+  oldRating Int
+  newRating Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, gameId])
+}

@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: chesshub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chesshub
+      POSTGRES_PASSWORD: chesshub_dev
+      POSTGRES_DB: chesshub
+    ports:
+      - "5433:5432"
+    volumes:
+      - chesshub_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chesshub -d chesshub"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  chesshub_pgdata:
